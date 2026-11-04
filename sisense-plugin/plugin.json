@@ -1,0 +1,6 @@
+{
+  "name": "csdkExporter",
+  "source": ["config.js", "lib.js", "main.js"],
+  "pluginInfraVersion": 2,
+  "isEnabled": true
+}
