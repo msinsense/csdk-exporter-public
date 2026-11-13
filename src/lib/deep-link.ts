@@ -6,6 +6,8 @@ export interface DeepLink {
   /** Opened by the Sisense plugin from its own folder: connect to this
    * origin with the user's Sisense session. */
   embedded?: boolean;
+  /** Connect with the Sisense session of the page that opened the app. */
+  useSession?: boolean;
 }
 
 function readParam(params: URLSearchParams, name: string): string | undefined {

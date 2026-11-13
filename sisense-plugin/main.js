@@ -93,8 +93,8 @@
     const appUrl = new URL(BUNDLED_APP_PATH, window.location.origin).toString();
     const url = lib.buildEmbeddedUrl(appUrl, { dashboardId, widgetId });
     if (config.openIn === 'tab') {
-      const win = window.open(url, config.target || '_blank');
-      if (win) win.opener = null;
+      // Keeps window.opener so the app can reuse this Sisense session.
+      window.open(url, config.target || '_blank');
     } else {
       openModal(url);
     }

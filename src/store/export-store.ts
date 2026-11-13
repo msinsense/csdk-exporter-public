@@ -1,6 +1,7 @@
 import type { Filter } from '@sisense/sdk-data';
 import { create } from 'zustand';
 import { type DeepLink, isValidUrl } from '@/lib/deep-link';
+import type { SignInReport } from '@/lib/sign-in-report';
 import { DEFAULT_WIDGET_TYPES } from '@/lib/widget-types';
 import type {
   ConnectionInfo,
@@ -21,6 +22,8 @@ interface ExportStoreState {
   /** Sisense widget types that can be picked and exported, from the
    * plugin's config.js. An empty list allows every exportable widget. */
   widgetTypes: string[];
+  /** How the embedded app signed in, when the plugin's debug is on. */
+  signInReport: SignInReport | null;
 
   dashboard: DashboardSummary | null;
   widget: WidgetSummary | null;
@@ -90,6 +93,7 @@ interface ExportStoreState {
 
   applyDeepLink: (link: DeepLink) => void;
   setWidgetTypes: (widgetTypes: string[]) => void;
+  setSignInReport: (signInReport: SignInReport) => void;
   resolveDeepLinkDashboard: (dashboard: DashboardSummary | null) => void;
   resolveDeepLinkWidget: (widget: WidgetSummary | null) => void;
   connect: (connection: ConnectionInfo) => void;
@@ -143,6 +147,7 @@ export const useExportStore = create<ExportStoreState>((set, get) => ({
   connection: null,
   embedded: false,
   widgetTypes: DEFAULT_WIDGET_TYPES,
+  signInReport: null,
   dashboard: null,
   widget: null,
   selectedFilters: [],
@@ -153,11 +158,20 @@ export const useExportStore = create<ExportStoreState>((set, get) => ({
   fileFormat: 'xlsx',
   ...initialExportState,
 
-  applyDeepLink: ({ url, token, dashboardId, widgetId, embedded = false }) => {
+  applyDeepLink: ({ url, token, dashboardId, widgetId, embedded = false, useSession = false }) => {
     // Kept even when we can't connect yet, so it still applies once the
     // user finishes the connection form.
     const pendingDeepLink = dashboardId ? { dashboardId, widgetId } : null;
     const validUrl = url && isValidUrl(url) ? url : undefined;
+    if (validUrl && useSession) {
+      set({
+        connection: { url: validUrl, token: '', useSession: true },
+        step: 'dashboard',
+        pendingDeepLink,
+        embedded,
+      });
+      return;
+    }
     if (!validUrl || !token) {
       set({ connectionPrefill: { url, token }, pendingDeepLink, embedded });
       return;
@@ -166,6 +180,7 @@ export const useExportStore = create<ExportStoreState>((set, get) => ({
   },
 
   setWidgetTypes: (widgetTypes) => set({ widgetTypes }),
+  setSignInReport: (signInReport) => set({ signInReport }),
 
   resolveDeepLinkDashboard: (dashboard) => {
     const pending = get().pendingDeepLink;

@@ -17,7 +17,8 @@ window.csdkExporterConfig = {
   // "..." menu items on dashboards and widgets.
   showInMenus: true,
 
-  // Logs every Sisense menu the plugin sees to the browser console.
+  // Logs every Sisense menu the plugin sees to the browser console, and
+  // shows how the app signed in (session or token, role) in the app.
   debug: false,
 
   // Window target when the app opens in a tab.

@@ -5,6 +5,8 @@ export type WizardStep = 'connect' | 'dashboard' | 'widget' | 'export' | 'done';
 export interface ConnectionInfo {
   url: string;
   token: string;
+  /** Use the Sisense session of the page that opened the app instead of a token. */
+  useSession?: boolean;
 }
 
 export interface DashboardSummary {

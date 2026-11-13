@@ -350,6 +350,21 @@ describe('useExportStore', () => {
       expect(useExportStore.getState().step).toBe('dashboard');
     });
 
+    it('connects with the Sisense session and no token', () => {
+      useExportStore.getState().applyDeepLink({
+        url: 'https://my.sisense.com',
+        embedded: true,
+        useSession: true,
+        dashboardId: 'd-1',
+      });
+      expect(useExportStore.getState().connection).toEqual({
+        url: 'https://my.sisense.com',
+        token: '',
+        useSession: true,
+      });
+      expect(useExportStore.getState().step).toBe('dashboard');
+    });
+
     it('ignores a widget id without a dashboard id', () => {
       useExportStore
         .getState()

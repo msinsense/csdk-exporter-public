@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { loadPluginConfig, readWidgetTypes } from './plugin-config';
+import { loadPluginConfig, readDebug, readWidgetTypes } from './plugin-config';
 import { DEFAULT_WIDGET_TYPES } from './widget-types';
 
 describe('readWidgetTypes', () => {
@@ -44,5 +44,13 @@ describe('loadPluginConfig', () => {
     document.head.querySelector('script')?.dispatchEvent(new Event('error'));
 
     await expect(loading).resolves.toBeUndefined();
+  });
+});
+
+describe('readDebug', () => {
+  it('is on only for debug: true', () => {
+    expect(readDebug({ debug: true })).toBe(true);
+    expect(readDebug({ debug: 'yes' })).toBe(false);
+    expect(readDebug(undefined)).toBe(false);
   });
 });

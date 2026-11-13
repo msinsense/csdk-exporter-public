@@ -4,6 +4,7 @@ import { DashboardPicker } from '@/components/DashboardPicker';
 import { ExportProgress } from '@/components/ExportProgress';
 import { ExportSummary } from '@/components/ExportSummary';
 import { PluginDownload } from '@/components/PluginDownload';
+import { SignInReportPanel } from '@/components/SignInReportPanel';
 import { SisenseConnection } from '@/components/SisenseConnection';
 import { WidgetPicker } from '@/components/WidgetPicker';
 import { WizardNav } from '@/components/WizardNav';
@@ -53,6 +54,7 @@ function App() {
           {!embedded && <PluginDownload />}
         </>
       )}
+      <SignInReportPanel />
       {!embedded && (
         <p className="absolute inset-x-4 bottom-2 text-left text-xs text-muted-foreground/50">
           This is an experimental proof-of-concept application. It may have issues, and this

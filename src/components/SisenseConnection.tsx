@@ -40,7 +40,7 @@ export function SisenseConnection({ connection, children }: SisenseConnectionPro
   return (
     <SisenseContextProvider
       url={connection.url}
-      token={connection.token}
+      {...(connection.useSession ? { useFusionAuth: true } : { token: connection.token })}
       onError={(error) => <ConnectionErrorCard error={error} onBack={disconnect} />}
     >
       {children}

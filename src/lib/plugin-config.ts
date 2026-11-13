@@ -3,6 +3,7 @@ import { DEFAULT_WIDGET_TYPES } from '@/lib/widget-types';
 /** The part of sisense-plugin/config.js the app reads. */
 export interface PluginConfig {
   widgetTypes?: unknown;
+  debug?: unknown;
 }
 
 declare global {
@@ -33,4 +34,9 @@ export function readWidgetTypes(config: PluginConfig | undefined): string[] {
   const types = config?.widgetTypes;
   if (!Array.isArray(types)) return DEFAULT_WIDGET_TYPES;
   return types.filter((type): type is string => typeof type === 'string');
+}
+
+/** Whether the plugin's debug option is on. */
+export function readDebug(config: PluginConfig | undefined): boolean {
+  return config?.debug === true;
 }

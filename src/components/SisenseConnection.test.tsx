@@ -7,13 +7,16 @@ import { SisenseConnection } from './SisenseConnection';
 
 type OnError = (error: Error) => ReactNode;
 
-const { capturedOnError } = vi.hoisted(() => ({
+const { capturedOnError, capturedProps } = vi.hoisted(() => ({
   capturedOnError: { current: null as OnError | null },
+  capturedProps: { current: {} as Record<string, unknown> },
 }));
 
 vi.mock('@sisense/sdk-ui', () => ({
-  SisenseContextProvider: ({ children, onError }: { children: ReactNode; onError: OnError }) => {
+  SisenseContextProvider: (props: { children: ReactNode; onError: OnError }) => {
+    const { children, onError } = props;
     capturedOnError.current = onError;
+    capturedProps.current = props;
     return children;
   },
 }));
@@ -27,6 +30,21 @@ beforeEach(() => {
 });
 
 describe('SisenseConnection', () => {
+  it('passes the token, or Fusion auth when using the Sisense session', () => {
+    const { unmount } = render(<SisenseConnection connection={connection}>x</SisenseConnection>);
+    expect(capturedProps.current).toMatchObject({ token: 'tok' });
+    expect(capturedProps.current).not.toHaveProperty('useFusionAuth');
+    unmount();
+
+    render(
+      <SisenseConnection connection={{ url: connection.url, token: '', useSession: true }}>
+        x
+      </SisenseConnection>,
+    );
+    expect(capturedProps.current).toMatchObject({ useFusionAuth: true });
+    expect(capturedProps.current).not.toHaveProperty('token');
+  });
+
   it('renders children normally when there is no error', () => {
     render(
       <SisenseConnection connection={connection}>
