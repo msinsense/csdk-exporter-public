@@ -11,16 +11,17 @@ export function readCookie(cookieString: string, name: string): string | undefin
 /**
  * Gets an API token for the user signed in to Sisense, from their session
  * cookie. Only works when the app is served by Sisense itself (same origin).
+ * `baseUrl` includes the tenant path on a multi-tenant Sisense.
  */
 export async function requestSessionToken(
-  origin: string = window.location.origin,
+  baseUrl: string = window.location.origin,
   fetchFn: typeof fetch = fetch,
 ): Promise<string> {
   const headers: Record<string, string> = { Accept: 'application/json' };
   const xsrf = readCookie(document.cookie, 'XSRF-TOKEN');
   if (xsrf) headers['X-XSRF-TOKEN'] = xsrf;
 
-  const response = await fetchFn(`${origin}${TOKEN_ENDPOINT}`, {
+  const response = await fetchFn(`${baseUrl.replace(/\/+$/, '')}${TOKEN_ENDPOINT}`, {
     method: 'GET',
     credentials: 'include',
     headers,

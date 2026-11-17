@@ -20,10 +20,37 @@
     return isIdAllowed(config.widgets, widget.oid);
   }
 
-  // Same origin as Sisense, so the app gets its own token from the session.
+  // Paths Sisense may be served under, most specific first, taken from the
+  // page path: '/proxy/acme/app/main/...' -> ['/proxy/acme', '/proxy', ''].
+  // Covers the root, tenants, reverse-proxy prefixes and their mix.
+  function candidateBasePaths(pathname) {
+    const segments = String(pathname || '')
+      .split('/')
+      .filter(Boolean);
+    let end = -1;
+    segments.forEach((segment, index) => {
+      if (segment.toLowerCase() === 'app') end = index;
+    });
+    if (end < 0) end = Math.min(segments.length, 3);
+    const paths = [];
+    for (let length = end; length >= 0; length--) {
+      paths.push(length ? `/${segments.slice(0, length).join('/')}` : '');
+    }
+    return paths;
+  }
+
+  // Whether an /api/auth/isauth response says the user is signed in there.
+  function isSignedInResponse(status, contentType, body) {
+    if (status !== 200 || !String(contentType || '').includes('application/json')) return false;
+    return Boolean(body?.isAuthenticated);
+  }
+
+  // Same origin as Sisense, so the app reuses the user's session.
+  // `url` is the Sisense base URL to connect to, with the tenant path.
   function buildEmbeddedUrl(appUrl, params) {
     const url = new URL(appUrl);
     url.searchParams.set('embedded', '1');
+    if (params.url) url.searchParams.set('url', params.url);
     if (params.dashboardId) url.searchParams.set('dashboardId', params.dashboardId);
     if (params.widgetId) url.searchParams.set('widgetId', params.widgetId);
     return url.toString();
@@ -68,6 +95,8 @@
     isIdAllowed,
     isDashboardAllowed,
     isWidgetAllowed,
+    candidateBasePaths,
+    isSignedInResponse,
     buildEmbeddedUrl,
     readStatusMessage,
   };

@@ -27,3 +27,11 @@ Edit `config.js`:
    (Admin → App Configuration → File Management). See
    [Sisense add-ons](https://docs.sisense.com/win/SisenseWin/sisense-add-ons.htm).
 2. Wait for the plugins to rebuild, then reload a dashboard.
+
+## Sisense URLs
+
+The plugin works out where Sisense is served from the page URL, so it works
+at the root (`/app/main`), on a tenant (`/acme/app/main`), and behind a
+reverse-proxy path (`/bi/acme/app/main`) with no extra settings. It asks each
+possible path whether the user is signed in there and uses the first that
+says yes. With `debug: true`, the app shows the Sisense URL it connected to.

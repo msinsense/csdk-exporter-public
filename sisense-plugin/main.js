@@ -4,7 +4,8 @@
 (() => {
   const config = window.csdkExporterConfig || {};
   const lib = window.CsdkExporterLib;
-  const BUNDLED_APP_PATH = '/plugins/csdkExporter/app/index.html';
+  const PLUGIN_PATH = '/plugins/csdkExporter';
+  const BUNDLED_APP_PATH = `${PLUGIN_PATH}/app/index.html`;
 
   console.info('[csdkExporter] loaded', {
     openIn: config.openIn || 'modal',
@@ -89,14 +90,59 @@
     modal = { root, iframe };
   }
 
+  // Finds the Sisense base URL (tenant and proxy path included) by asking
+  // each candidate path whether the user is signed in there, and where this
+  // plugin's files are served. Checked once, as soon as the plugin loads.
+  const candidates = lib.candidateBasePaths(window.location.pathname);
+
+  async function firstMatch(check) {
+    for (const path of candidates) {
+      try {
+        if (await check(path)) return path;
+      } catch {
+        // Not this one.
+      }
+    }
+    return null;
+  }
+
+  function urlFor(path) {
+    return new URL(path || '/', window.location.origin).toString().replace(/\/$/, '');
+  }
+
+  const sisenseBasePromise = firstMatch(async (path) => {
+    const response = await fetch(`${urlFor(path)}/api/auth/isauth`, { credentials: 'include' });
+    const contentType = response.headers.get('Content-Type');
+    const body = contentType?.includes('application/json') ? await response.json() : null;
+    return lib.isSignedInResponse(response.status, contentType, body);
+  }).then((path) => (path === null ? candidates[0] : path));
+
+  const pluginBasePromise = firstMatch(async (path) => {
+    const response = await fetch(`${urlFor(path)}${PLUGIN_PATH}/config.js`, {
+      credentials: 'same-origin',
+    });
+    // The plugin's own config.js, not a Sisense page served for any path.
+    return response.ok && (await response.text()).includes('csdkExporterConfig');
+  }).then((path) => (path === null ? '' : path));
+
+  async function exporterUrl(dashboardId, widgetId) {
+    const [sisensePath, pluginPath] = await Promise.all([sisenseBasePromise, pluginBasePromise]);
+    const sisenseUrl = urlFor(sisensePath);
+    const appUrl = urlFor(pluginPath) + BUNDLED_APP_PATH;
+    debug('open', { candidates, sisenseUrl, appUrl });
+    return lib.buildEmbeddedUrl(appUrl, { dashboardId, widgetId, url: sisenseUrl });
+  }
+
   function openExporter(dashboardId, widgetId) {
-    const appUrl = new URL(BUNDLED_APP_PATH, window.location.origin).toString();
-    const url = lib.buildEmbeddedUrl(appUrl, { dashboardId, widgetId });
     if (config.openIn === 'tab') {
+      // Opened right away, inside the click, so popup blockers allow it.
       // Keeps window.opener so the app can reuse this Sisense session.
-      window.open(url, config.target || '_blank');
+      const tab = window.open('about:blank', config.target || '_blank');
+      exporterUrl(dashboardId, widgetId).then((url) => {
+        if (tab) tab.location.href = url;
+      });
     } else {
-      openModal(url);
+      exporterUrl(dashboardId, widgetId).then(openModal);
     }
   }
 

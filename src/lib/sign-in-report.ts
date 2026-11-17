@@ -7,7 +7,17 @@ export interface SignInReport {
   role?: string;
   /** Result of calling the API token endpoint: 'ok', an error message, or not tried. */
   tokenEndpoint?: string;
+  /** The Sisense URL the app connected to, with the tenant path if any. */
+  sisenseUrl?: string;
+  /** Where the XSRF cookie came from. */
+  xsrfCookie?: 'own' | 'copied' | 'missing';
 }
+
+const XSRF_LABELS: Record<NonNullable<SignInReport['xsrfCookie']>, string> = {
+  own: 'this page',
+  copied: 'copied from the Sisense page',
+  missing: 'not found',
+};
 
 const METHOD_LABELS: Record<SignInReport['method'], string> = {
   session: 'Sisense session (no token)',
@@ -28,5 +38,7 @@ export function signInReportLines(report: SignInReport): [string, string][] {
     ['Session from', report.sessionSource ? SOURCE_LABELS[report.sessionSource] : 'not found'],
     ['Role', report.role ?? 'unknown'],
     ['API token endpoint', report.tokenEndpoint ?? 'not tried'],
+    ['Sisense URL', report.sisenseUrl ?? 'unknown'],
+    ['XSRF cookie', report.xsrfCookie ? XSRF_LABELS[report.xsrfCookie] : 'unknown'],
   ];
 }

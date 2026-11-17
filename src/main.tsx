@@ -4,21 +4,28 @@ import './index.css';
 import App from './App.tsx';
 import { readDeepLink, stripTokenFromUrl } from './lib/deep-link';
 import { loadPluginConfig, readDebug, readWidgetTypes } from './lib/plugin-config';
-import { requestSessionToken } from './lib/session-token';
+import { readCookie, requestSessionToken } from './lib/session-token';
 import type { SignInReport } from './lib/sign-in-report';
-import { adoptSisenseSession, readSessionRole } from './lib/sisense-session';
+import {
+  adoptSisenseSession,
+  embeddedSisenseUrl,
+  readSessionRole,
+  shareXsrfCookie,
+} from './lib/sisense-session';
 import { useExportStore } from './store/export-store';
 
 async function init() {
   const link = readDeepLink(window.location);
   // Served by Sisense from the plugin folder: connect to it as the signed-in user.
   if (link.embedded) {
-    link.url ??= window.location.origin;
+    // Includes the tenant path on a multi-tenant Sisense.
+    link.url = embeddedSisenseUrl(window.location, link.url);
     const tokenFromLink = !!link.token;
     // Reuse the Sisense session (works for every role). The API token
     // endpoint is only a fallback, since non-admin roles can't use it.
     const sessionSource = tokenFromLink ? null : adoptSisenseSession();
     link.useSession = !!sessionSource;
+    const xsrfCopied = shareXsrfCookie();
 
     const pluginConfig = await loadPluginConfig();
     const debug = readDebug(pluginConfig);
@@ -28,7 +35,7 @@ async function init() {
     let tokenEndpoint: string | undefined;
     if (!tokenFromLink && (!link.useSession || debug)) {
       try {
-        const token = await requestSessionToken();
+        const token = await requestSessionToken(link.url);
         tokenEndpoint = 'ok';
         if (!link.useSession) link.token = token;
       } catch (error) {
@@ -51,6 +58,12 @@ async function init() {
         sessionSource,
         role: readSessionRole(),
         tokenEndpoint,
+        sisenseUrl: link.url,
+        xsrfCookie: xsrfCopied
+          ? 'copied'
+          : readCookie(document.cookie, 'XSRF-TOKEN')
+            ? 'own'
+            : 'missing',
       };
       console.info('[csdkExporter] Sign-in:', report);
       useExportStore.getState().setSignInReport(report);

@@ -4,6 +4,8 @@ type Lib = {
   isIdAllowed: (rule: unknown, id: string) => boolean;
   isDashboardAllowed: (config: unknown, dashboardId?: string) => boolean;
   isWidgetAllowed: (config: unknown, dashboardId: string, widget: unknown) => boolean;
+  candidateBasePaths: (pathname: string) => string[];
+  isSignedInResponse: (status: number, contentType: string | null, body: unknown) => boolean;
   buildEmbeddedUrl: (appUrl: string, params: Record<string, string | undefined>) => string;
   readStatusMessage: (
     event: { source: unknown; origin: string; data: unknown },
@@ -130,10 +132,50 @@ describe('buildEmbeddedUrl', () => {
     );
   });
 
+  it('adds the Sisense url', () => {
+    expect(
+      lib.buildEmbeddedUrl('https://bi.example.com/app/', { url: 'https://bi.example.com/acme' }),
+    ).toBe('https://bi.example.com/app/?embedded=1&url=https%3A%2F%2Fbi.example.com%2Facme');
+  });
+
   it('leaves out missing ids', () => {
     expect(lib.buildEmbeddedUrl('https://bi.example.com/app/', { dashboardId: 'd1' })).toBe(
       'https://bi.example.com/app/?embedded=1&dashboardId=d1',
     );
+  });
+});
+
+describe('candidateBasePaths', () => {
+  it('lists the root path for the system tenant', () => {
+    expect(lib.candidateBasePaths('/app/main/dashboards/d1')).toEqual(['']);
+  });
+
+  it('puts the tenant before the root', () => {
+    expect(lib.candidateBasePaths('/acme/app/main/dashboards/d1')).toEqual(['/acme', '']);
+  });
+
+  it('covers a reverse-proxy prefix, with or without a tenant', () => {
+    expect(lib.candidateBasePaths('/bi/acme/app/main')).toEqual(['/bi/acme', '/bi', '']);
+    expect(lib.candidateBasePaths('/bi/app/main')).toEqual(['/bi', '']);
+  });
+
+  it('handles a tenant named "app"', () => {
+    expect(lib.candidateBasePaths('/app/app/main')).toEqual(['/app', '']);
+  });
+
+  it('falls back to a few leading segments without an /app route', () => {
+    expect(lib.candidateBasePaths('/a/b/c/d/e')).toEqual(['/a/b/c', '/a/b', '/a', '']);
+    expect(lib.candidateBasePaths('')).toEqual(['']);
+  });
+});
+
+describe('isSignedInResponse', () => {
+  it('needs a 200 JSON response that says the user is signed in', () => {
+    expect(lib.isSignedInResponse(200, 'application/json', { isAuthenticated: true })).toBe(true);
+    expect(lib.isSignedInResponse(200, 'application/json', { isAuthenticated: false })).toBe(false);
+    expect(lib.isSignedInResponse(200, 'text/html', { isAuthenticated: true })).toBe(false);
+    expect(lib.isSignedInResponse(401, 'application/json', { isAuthenticated: true })).toBe(false);
+    expect(lib.isSignedInResponse(200, null, null)).toBe(false);
   });
 });
 

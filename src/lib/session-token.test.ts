@@ -31,6 +31,15 @@ describe('requestSessionToken', () => {
     );
   });
 
+  it('keeps the tenant path and ignores a trailing slash', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse({ token: 'abc' }));
+    await requestSessionToken('https://bi.example.com/acme/', fetchFn);
+    expect(fetchFn).toHaveBeenCalledWith(
+      'https://bi.example.com/acme/api/v1/authentication/tokens/api',
+      expect.anything(),
+    );
+  });
+
   it('accepts access_token or a plain string body', async () => {
     const origin = 'https://bi.example.com';
     await expect(
