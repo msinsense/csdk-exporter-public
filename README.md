@@ -18,6 +18,24 @@ the same data security as the dashboard. The app is built with
 [Compose SDK](https://sisense.dev/guides/sdk/) and ships inside the plugin, so
 there is nothing to host.
 
+## Disclaimer: a custom, unofficial plugin
+
+**CSDK Exporter is *not* an official Sisense product, plugin or add-on.** It
+is a custom, external solution built on Sisense's public APIs and Compose SDK,
+shared as-is.
+
+- **No SLA or official support:** it isn't covered by any Sisense Service
+  Level Agreement or support contract. Don't open Sisense Support tickets for
+  it.
+- **Not part of Sisense's product processes:** it doesn't go through
+  Sisense's product QA, security review or release lifecycle.
+- **No compatibility guarantees:** Sisense and Compose SDK may change between
+  versions, and the plugin may break as a result.
+- **No guaranteed updates:** this repository is where the plugin is
+  published, not a maintained product. Fork it and make the changes you need
+  in your own copy.
+- **Use at your own risk:** test it in a non-production environment first.
+
 ## Install
 
 1. Download `csdkExporter.zip` from the
@@ -59,9 +77,10 @@ Text, filter and custom widgets have no data and are never exported.
   column values. Subtotals and grand totals aren't included.
 - **Keep the tab open:** the export runs in the Sisense tab and stops if the
   tab is closed or reloaded. Moving between dashboards is fine.
-- **Sign-in:** the plugin gets an API token for the signed-in user from
-  `/api/v1/authentication/tokens/api`, which must be allowed for regular
-  users.
+- **Sign-in:** the app reuses the signed-in user's Sisense session, so it
+  works for every role. It finds the right Sisense URL on its own, including
+  tenants (`/<tenant>/app/main`), reverse-proxy paths and subdomains. Set
+  `debug: true` to see the URL it connected to.
 
 ## Build from source
 
