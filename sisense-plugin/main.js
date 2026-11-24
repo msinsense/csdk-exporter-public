@@ -7,14 +7,11 @@
   const PLUGIN_PATH = '/plugins/csdkExporter';
   const BUNDLED_APP_PATH = `${PLUGIN_PATH}/app/index.html`;
 
-  console.info('[csdkExporter] loaded', {
-    openIn: config.openIn || 'modal',
-    debug: Boolean(config.debug),
-  });
-
   function debug(...args) {
     if (config.debug) console.info('[csdkExporter]', ...args);
   }
+
+  debug('loaded', { openIn: config.openIn || 'modal' });
 
   // Modal with the bundled app in a same-origin iframe.
   let modal = null;

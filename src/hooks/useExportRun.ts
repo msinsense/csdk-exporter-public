@@ -1,6 +1,7 @@
 import type { QueryResultData } from '@sisense/sdk-data';
 import { useExecuteQuery, useGetWidgetModel } from '@sisense/sdk-ui';
 import { useEffect, useRef } from 'react';
+import { debugLog } from '@/lib/debug-log';
 import { getErrorMessage } from '@/lib/error-message';
 import { toColumnFormats } from '@/lib/excel-number-format';
 import { createEncoder, type ExportEncoder, FILE_TYPES } from '@/lib/export-format';
@@ -167,7 +168,7 @@ export function useExportRun(dashboardOid: string, widgetOid: string) {
     const startedAt = requestStartedAtRef.current;
     if (startedAt !== null) {
       const durationMs = Math.round(performance.now() - startedAt);
-      console.info(`[csdk-exporter] page at offset=${offset} settled in ${durationMs}ms`);
+      debugLog(`page at offset=${offset} settled in ${durationMs}ms`);
       recordChunkDuration(durationMs);
     }
 

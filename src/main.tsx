@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App.tsx';
+import { debugLog, debugWarn, setDebugLogging } from './lib/debug-log';
 import { readDeepLink, stripTokenFromUrl } from './lib/deep-link';
 import { loadPluginConfig, readDebug, readWidgetTypes } from './lib/plugin-config';
 import { readCookie, requestSessionToken } from './lib/session-token';
@@ -29,6 +30,7 @@ async function init() {
 
     const pluginConfig = await loadPluginConfig();
     const debug = readDebug(pluginConfig);
+    setDebugLogging(debug);
     useExportStore.getState().setWidgetTypes(readWidgetTypes(pluginConfig));
 
     // With debug on, the endpoint is also called just to report what it returns.
@@ -41,7 +43,7 @@ async function init() {
       } catch (error) {
         tokenEndpoint = error instanceof Error ? error.message : String(error);
         if (!link.useSession) {
-          console.warn('[csdkExporter] Falling back to the connection form:', error);
+          debugWarn('Falling back to the connection form:', error);
         }
       }
     }
@@ -65,7 +67,7 @@ async function init() {
             ? 'own'
             : 'missing',
       };
-      console.info('[csdkExporter] Sign-in:', report);
+      debugLog('Sign-in:', report);
       useExportStore.getState().setSignInReport(report);
     }
   }
